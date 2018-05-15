@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1526385213825.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "91E10DC3",
+    "lastKnownWriteTime" : 1524258566,
+    "last_content_update" : 1524258566,
+    "path" : "C:/R/Project/Pinta/Code/DataClean.R",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "100,47",
+        "scrollLine" : "80"
+    },
+    "relative_order" : 4,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

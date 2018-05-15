@@ -2,8 +2,11 @@
 title: "Interactive CV"
 output: 
   flexdashboard::flex_dashboard:
-    navbar:
-      - { title: "About", href: "https://example.com/about", align: left }
+    #social: menu
+    source_code: https://github.com/YspAnimal/Interactive-CV
+    css: bootstrap.css
+    #- { title: "Source code", href: "https://github.com/YspAnimal/Interactive-CV", icon: "github" , align: right }
+
 runtime: shiny
 ---
 
@@ -12,10 +15,58 @@ library(flexdashboard)
 library(data.table)
 library(ggplot2)
 library(dplyr)
+library(timevis)
+library(lubridate)
+data <- fread("./WorkingPath.csv")
+data$start <- dmy(data$Start)
+data$end <- dmy(data$End)
+data$content <- data$Place
 ```
 
 Column {.sidebar}
------------------------------------------------------------------------
-Photo
+======================
+<br>
+<style>
+img {
+  border-radius: 50%;
+}
+</style>
+<img src="myphoto.jpeg" alt="Avatar" style="width:200px">
 
-Overview
+**NIKOLAY SOLOVEY**
+
+IT specialist
+
+Male, 32 year`s old
+
+Bachelor degree in Mathematics
+
+Specialist degree in Applied Math
+
+About
+======================
+About
+
+
+
+
+
+Working Path
+======================
+### Working Path
+```{r}
+renderTimevis({
+  timevis(data, showZoom = FALSE, height = 250)
+  })
+```
+
+
+
+
+
+
+
+Learning Path
+======================
+Learning Path
+

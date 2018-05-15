@@ -1,0 +1,144 @@
+library(data.table)
+library(dplyr)
+library(tidyr)
+library(magrittr)
+library(lubridate)
+library(stringr)
+
+
+##################################################
+#setwd("C:/R/Project/Pinta")
+# destFiles <- c("./Data/csv/1.csv", "./Data/csv/2.csv", "./Data/csv/3.csv", "./Data/csv/4.csv")
+# if (file.exists(destFiles)){
+#     #PDtable1 <- fread("./Data/RAWTransactionData0103.csv")
+#     #PDtable2 <- fread("./Data/RAWTransactionData0406.csv")
+#     PDtable <- rbind(fread("./Data/csv/1.csv"), fread("./Data/csv/2.csv"), fread("./Data/csv/3.csv"), fread("./Data/csv/4.csv"))
+# }
+tmpDTT1 <- fread("./Data/csv/1.csv", colClasses=c("character","character","character",
+                                               "character","character","character",
+                                               "character","character","character",
+                                               "character","character"), na.strings="", encoding = "UTF-8")
+tmpDTT2 <- fread("./Data/csv/2.csv", colClasses=c("character","character","character",
+                                               "character","character","character",
+                                               "character","character","character",
+                                               "character","character"), na.strings="", encoding = "UTF-8")
+tmpDTT3 <- fread("./Data/csv/3.csv", colClasses=c("character","character","character",
+                                               "character","character","character",
+                                               "character","character","character",
+                                               "character","character"), na.strings="", encoding = "UTF-8")
+tmpDTT4 <- fread("./Data/csv/4_new.csv", colClasses=c("character","character","character",
+                                               "character","character","character",
+                                               "character","character","character",
+                                               "character","character"), na.strings="", encoding = "UTF-8")
+tmpDTT5 <- fread("./Data/csv/RAWTransactionData0103.csv", colClasses=c("character","character","character",
+                                                                    "character","character","character",
+                                                                    "character","character","character",
+                                                                    "character","character"), na.strings="", encoding = "UTF-8")
+
+tmpDTT6 <- fread("./Data/csv/RAWTransactionData0406.csv", colClasses=c("character","character","character",
+                                                                    "character","character","character",
+                                                                    "character","character","character",
+                                                                    "character","character"), na.strings="", encoding = "UTF-8")
+
+
+PDtable <- rbind(tmpDTT1, tmpDTT2, tmpDTT3, tmpDTT4)
+
+colnames(PDtable) <- c("Place", "Date", "TNumber", "Card", "Item", "ItemCategory", "Hour", "Count", "Sum", "SumFact", "Discount")
+colnames(tmpDTT5) <- c("Place", "Date", "TNumber", "Card", "Item", "ItemCategory", "Hour", "Count", "Sum", "SumFact", "Discount")
+colnames(tmpDTT6) <- c("Place", "Date", "TNumber", "Card", "Item", "ItemCategory", "Hour", "Count", "Sum", "SumFact", "Discount")
+
+#PDtable_tmp <- PDtable
+#PDtable_tmp %<>% fill(Place, Date, TNumber, Item, ItemCategory)
+#PDtable[PDtable$TNumber == '100002', ]
+#PDtable_tmp[PDtable_tmp$TNumber == '100002', ]
+
+
+PDtable <- rbind(PDtable, tmpDTT5, tmpDTT6)
+PDtable %<>% fill(Place, Date, TNumber, Item, ItemCategory)
+## Remove temporary variables from environment
+rm(list = ls()[grep("^tmp", ls())])
+
+
+PDtable$Count <- sub(" ", "", PDtable$Count) # remove Utf8 - 160 symbol from column values
+PDtable$Sum <- sub(" ", "", PDtable$Sum)
+PDtable$Discount <- sub(" ", "", PDtable$Discount) # remove Utf8 - 160 symbol from column values
+PDtable$SumFact <- sub(" ", "", PDtable$SumFact)
+PDtable$Count <- sub(intToUtf8(160), "", PDtable$Count) # remove Utf8 - 160 symbol from column values
+PDtable$Sum <- sub(intToUtf8(160), "", PDtable$Sum)
+PDtable$Discount <- sub(intToUtf8(160), "", PDtable$Discount) # remove Utf8 - 160 symbol from column values
+PDtable$SumFact <- sub(intToUtf8(160), "", PDtable$SumFact)
+
+PDtable$Count <- as.numeric(sub(",", ".", PDtable$Count)) # "," to "." in decimal
+PDtable$Sum <- as.numeric(sub(",", ".", PDtable$Sum, fixed = TRUE))
+PDtable$Discount <- as.numeric(sub(",", ".", PDtable$Discount)) # "," to "." in decimal
+PDtable$SumFact <- as.numeric(sub(",", ".", PDtable$SumFact, fixed = TRUE))
+
+PDtableItems <- PDtable
+
+###grep( "(\\d+\\/\\d+\\/\\d+\\w)", PDtableItems$Item, value = TRUE) ###  Check sth like '100/150/25г'
+###gsub("(\\d+\\/\\d+\\/\\d+\\w)", "", PDtableItems$Item[6])
+### '(\w+\/\w+\/\w+\г)' - Check sth like '100/150/25г'
+### '(\d+\/\d+\/\d+\W)'
+
+PDtableItems$volume <- substr(PDtableItems$Item, regexpr("\\d+", PDtableItems$Item), nchar(PDtableItems$Item)) # Removing all volumes from item to New Variable
+#substr(PDtableItems[194963, ]$Item, regexpr("\\d+", PDtableItems[194963, ]$Item), nchar(PDtableItems[194963, ]$Item))
+
+
+PDtableItems$Item <- gsub("\\d.*", "", PDtableItems$Item) # # Removing all volumes from item
+PDtableItems$Item <- gsub("\\s$", "", PDtableItems$Item) # # Removing space at the end of strings in Items
+PDtableItems$Item <- gsub("Пинта|БУТ", "", PDtableItems$Item)
+PDtableItems$Place <- gsub("КОШ Пинта Бар|Пинта Бар КОШ", "Пинта Петровский", PDtableItems$Place)
+PDtableItems$Place <- gsub("Сигма. Пинта|Пинта Паб Сигма", "Пинта Сигма", PDtableItems$Place)
+PDtableItems$Place <- gsub("Пинта Паб Первомайский|Паб Первомайский", "Пинта Первомайский", PDtableItems$Place)
+PDtableItems[PDtableItems$Item == ""]$Item <- PDtableItems[PDtableItems$Item == ""]$volume
+
+PDtableItems$Place <- as.factor(trimws(PDtableItems$Place))
+PDtableItems$Card <- as.factor(trimws(PDtableItems$Card))
+PDtableItems$TNumber <- as.factor(trimws(PDtableItems$TNumber))
+PDtableItems$Item <- as.factor(trimws(PDtableItems$Item))
+PDtableItems$ItemCategory <- as.factor(trimws(PDtableItems$ItemCategory))
+PDtableItems$Date <- paste(PDtableItems$Date, paste0(PDtableItems$Hour, ":00:00"), sep = " ")
+PDtableItems$Date <- dmy_hms(PDtableItems$Date)
+PDtableItems$Month <- as.POSIXlt(PDtableItems$Date)$mon + 1
+
+#tmp222 <- PDtableItems[PDtableItems$TNumber == '181523']
+
+### Fill Card column with SQL-Like left_join operation
+## Rewrite TNumber column using prefix: [Short Place name]+[ddmm]+[TNumber]
+PDtableItems %<>% mutate(TNumber, TNumber_New = paste0(str_sub(PDtableItems$Place, 1, 1), as.character(mday(PDtableItems$Date)), as.character(month(PDtableItems$Date)), as.character(PDtableItems$TNumber)))
+
+
+PDtableItems$TNumber <- as.character(PDtableItems$TNumber_New)
+PDtableCard <- PDtableItems[!is.na(PDtableItems$Card), ] %>% select(TNumber)
+#colnames(PDtableCard) <- c('CardNumber','TNumber', 'PlaceN')
+#CardTransactions_tmp <- PDtableItems %>% filter(TNumber %in% PDtableCard$TNumber)
+CardTransactions <- PDtableItems %>% 
+                      filter(TNumber %in% PDtableCard$TNumber) %>% 
+                      arrange(Place, TNumber, Card) %>% 
+                      fill(Card) %>%
+                      select(-TNumber_New)
+
+##CardTransactions <- left_join(PDtableItems, PDtableCard, by = c('TNumber' = 'TNumber')) %>% filter(!is.na(CardNumber)) %>% select(-Card)
+##names(CardTransactions)[names(CardTransactions) == 'CardNumber'] <- 'Card'
+##CardTransactions <- CardTransactions[c("Place", "Date", "TNumber", "Card", "Item", "ItemCategory", "Hour", "Count", "Sum", "SumFact", "Discount", "volume")]
+### 
+
+
+### Filter all transactions to separate categories, 1-Store category, 2-Pubs category
+StoreTransactions <- filter(PDtableItems, grepl('Магазин', Place))
+PubsTransactions <- filter(PDtableItems, !grepl('Магазин', Place))
+
+saveRDS(StoreTransactions, file = './Data/StoreTransactions.rds')
+saveRDS(PubsTransactions, file = './Data/PubsTransactions.rds')
+saveRDS(CardTransactions, file = './Data/CardTransactions.rds')
+
+## Clear environment
+rm(list = ls()[grep("^tmp|^PDtable|Transactions", ls())])
+
+
+
+
+
+
+
+
