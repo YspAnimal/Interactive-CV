@@ -60,37 +60,45 @@ Working Path
 ======================
 ### Working Path
 ```{r}
-timevisOutput('timeLine')
+fluidPage(
+  timevisOutput('timeLine'),
+  tags$div(id="skillsButtons")
+)
+
 output$timeLine <- renderTimevis({
   timevis(timeLineData, showZoom = FALSE, height = 250)
   })
-tags$div(id="skillsButtons")
 
-### This is working on single shiny app, but doesnt work with flexdashboard. I will try to write a module or external app for it
+inserted <- c()
+
 observeEvent(input$timeLine_selected, {
   selectedOrg <- timeLineData %>% 
-                    filter(id == as.numeric(input$timeLine_selected)) %>% 
-                    select(place)
+    filter(id == as.numeric(input$timeLine_selected)) %>% 
+    select(place)
   selectedSkills <- skills %>% 
-                      filter(company %in% selectedOrg)
-  idNum <- 0
+    filter(company %in% selectedOrg)
+  
+  if (!is.null(inserted)) {
+    map(inserted, function(x){
+      removeUI(selector =  paste0("#", x))
+    })
+  }
+  
+  idNum <- 1
   skillsButtons <- map(selectedSkills$keySkills, function(x){
-    print(x)
-    idNum <<- idNum + 1
     id <- paste0('skill', idNum)
-    actionButton(id,x)
+    inserted[idNum] <<- id
+    button <- actionButton(id,x)
+    idNum <<- idNum + 1
+    return(button)
   })
-  print(str(skillsButtons))
   fluidRow(
     insertUI(
       selector = "#skillsButtons", 
       ui = skillsButtons
     )
   )
-})
-
-
-
+  })
 ```
 
 
