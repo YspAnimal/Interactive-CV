@@ -15,22 +15,28 @@ server <- function(input, output, session) {
   output$timeLine <- renderTimevis({
     timevis(timeLineData, showZoom = FALSE, height = 250)
   })
-
+  inserted <- c()
+  
   observeEvent(input$timeLine_selected, {
     selectedOrg <- timeLineData %>% 
       filter(id == as.numeric(input$timeLine_selected)) %>% 
       select(place)
     selectedSkills <- skills %>% 
       filter(company %in% selectedOrg)
-
-    removeUI(selector =  "#skill1")
     
-    idNum <- 0
+    if (!is.null(inserted)) {
+      map(inserted, function(x){
+        removeUI(selector =  paste0("#", x))
+      })
+    }
+    
+    idNum <- 1
     skillsButtons <- map(selectedSkills$keySkills, function(x){
-      print(x)
-      idNum <<- idNum + 1
       id <- paste0('skill', idNum)
-      actionButton(id,x)
+      inserted[idNum] <<- id
+      button <- actionButton(id,x)
+      idNum <<- idNum + 1
+      return(button)
     })
     print(str(skillsButtons))
     fluidRow(
