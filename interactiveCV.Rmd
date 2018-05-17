@@ -15,12 +15,17 @@ library(flexdashboard)
 library(data.table)
 library(ggplot2)
 library(dplyr)
+library(purrr)
 library(timevis)
 library(lubridate)
-data <- fread("./WorkingPath.csv")
-data$start <- dmy(data$Start)
-data$end <- dmy(data$End)
-data$content <- data$Place
+library(openxlsx)
+timeLineData <- read.xlsx("./WorkingPath.xlsx", sheet = 1, detectDates = TRUE)
+timeLineData$content <- timeLineData$place
+projects <- read.xlsx("./WorkingPath.xlsx", sheet = 2)
+skills <- read.xlsx("./WorkingPath.xlsx", sheet = 3)
+
+
+
 ```
 
 Column {.sidebar}
@@ -55,9 +60,37 @@ Working Path
 ======================
 ### Working Path
 ```{r}
-renderTimevis({
-  timevis(data, showZoom = FALSE, height = 250)
+timevisOutput('timeLine')
+output$timeLine <- renderTimevis({
+  timevis(timeLineData, showZoom = FALSE, height = 250)
   })
+tags$div(id="skillsButtons")
+
+### This is working on single shiny app, but doesnt work with flexdashboard. I will try to write a module or external app for it
+observeEvent(input$timeLine_selected, {
+  selectedOrg <- timeLineData %>% 
+                    filter(id == as.numeric(input$timeLine_selected)) %>% 
+                    select(place)
+  selectedSkills <- skills %>% 
+                      filter(company %in% selectedOrg)
+  idNum <- 0
+  skillsButtons <- map(selectedSkills$keySkills, function(x){
+    print(x)
+    idNum <<- idNum + 1
+    id <- paste0('skill', idNum)
+    actionButton(id,x)
+  })
+  print(str(skillsButtons))
+  fluidRow(
+    insertUI(
+      selector = "#skillsButtons", 
+      ui = skillsButtons
+    )
+  )
+})
+
+
+
 ```
 
 
