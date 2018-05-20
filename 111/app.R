@@ -2,8 +2,7 @@ library(shiny)
 
 ui <- fluidPage(
   timevisOutput('timeLine'),
-  tags$div(id="skillsButtons")
-  )
+  tags$div(id="skillsButtons", style = "margin: 5px")  )
 
 server <- function(input, output, session) {
   timeLineData <- read.xlsx("../WorkingPath.xlsx", sheet = 1, detectDates = TRUE)

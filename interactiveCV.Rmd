@@ -1,12 +1,10 @@
 ---
-title: "Interactive CV"
+title: "Interactive Profile"
 output: 
   flexdashboard::flex_dashboard:
     #social: menu
     source_code: https://github.com/YspAnimal/Interactive-CV
-    css: bootstrap.css
-    #- { title: "Source code", href: "https://github.com/YspAnimal/Interactive-CV", icon: "github" , align: right }
-
+    theme: bootstrap
 runtime: shiny
 ---
 
@@ -19,26 +17,47 @@ library(purrr)
 library(timevis)
 library(lubridate)
 library(openxlsx)
+library(shiny.semantic)
 timeLineData <- read.xlsx("./WorkingPath.xlsx", sheet = 1, detectDates = TRUE)
 timeLineData$content <- timeLineData$place
 projects <- read.xlsx("./WorkingPath.xlsx", sheet = 2)
 skills <- read.xlsx("./WorkingPath.xlsx", sheet = 3)
-
+timeLineCourses <- read.xlsx("./WorkingPath.xlsx", sheet = 4, detectDates = TRUE)
+timeLineCourses$content <- timeLineCourses$Course
+cssButtonStyle <- "margin-bottom:4px; border-radius: 12px;background-color: white; color: gray"
 
 
 ```
 
 Column {.sidebar}
 ======================
+```{r}
+HTML("
 <br>
-<style>
-img {
-  border-radius: 50%;
-}
-</style>
-<img src="myphoto.jpeg" alt="Avatar" style="width:200px">
+<center>
+    <img src=\"myphoto.jpeg\" alt=\"Avatar\" style=\"width:200px; border-radius:50%\">
+</center>
+<br>
+")
+HTML('<hr style="color: gray;">')
+```
 
-**NIKOLAY SOLOVEY**
+##Details
+
+**Name:**
+Nikolay Solovey
+
+**Age:**
+32 years
+
+**Location:**
+Izhevsk, Russia. Open to the world)
+```{r}
+HTML('<hr style="color: gray;">')
+```
+
+About {data-icon="fa-user"}
+======================
 
 IT specialist
 
@@ -48,66 +67,110 @@ Bachelor degree in Mathematics
 
 Specialist degree in Applied Math
 
-About
-======================
-About
 
 
 
 
 
-Working Path
+Careers {data-icon="fa-building"}
 ======================
 ### Working Path
 ```{r}
-fluidPage(
-  timevisOutput('timeLine'),
-  tags$div(id="skillsButtons")
-)
-
-output$timeLine <- renderTimevis({
+shinyUI(
+semanticPage(
+  fluidRow(
+    column(width = 8,
+      timevisOutput('timeLineWork'),
+      wellPanel(
+        div(id="skillsButtons")
+      )
+    ),
+    column(width = 4,
+      DT::dataTableOutput("projects")       
+    )
+  ),
+  fluidRow(
+    column(width = 8,
+           titlePanel("Work overview")
+           ),
+    column(width = 4,
+           titlePanel("Project description")
+           
+           )
+    
+  )
+))
+output$timeLineWork <- renderTimevis({
   timevis(timeLineData, showZoom = FALSE, height = 250)
   })
 
 inserted <- c()
 
-observeEvent(input$timeLine_selected, {
-  selectedOrg <- timeLineData %>% 
-    filter(id == as.numeric(input$timeLine_selected)) %>% 
+observeEvent(input$timeLineWork_selected, {
+  ## Filtering data based on timeLine select
+  selectedCompany <- timeLineData %>% 
+    filter(id == as.numeric(input$timeLineWork_selected)) %>% 
     select(place)
   selectedSkills <- skills %>% 
-    filter(company %in% selectedOrg)
-  
+    filter(company %in% selectedCompany)
+  ## Clear earlier inserted buttons
   if (!is.null(inserted)) {
     map(inserted, function(x){
       removeUI(selector =  paste0("#", x))
     })
   }
   
+  ## Create buttons list for inserting
   idNum <- 1
   skillsButtons <- map(selectedSkills$keySkills, function(x){
     id <- paste0('skill', idNum)
     inserted[idNum] <<- id
-    button <- actionButton(id,x)
+    button <- actionButton(id, x, style = cssButtonStyle)
     idNum <<- idNum + 1
     return(button)
   })
-  fluidRow(
-    insertUI(
-      selector = "#skillsButtons", 
-      ui = skillsButtons
-    )
+  insertUI(
+    selector = "#skillsButtons", 
+    ui = skillsButtons
   )
-  })
+  
+  output$projects <- DT::renderDataTable({
+    projects %>% filter(company %in% selectedCompany) %>% select(project, status)
+  }, selection = 'single', options = list(dom = 't'))
+  
+})
+
 ```
 
-
-
-
-
-
-
-Learning Path
+Education {data-icon="fa-graduation-cap"}
 ======================
-Learning Path
+###Learning Path
+
+```{r}
+fluidPage(
+  fluidRow(
+    column(width = 12,
+      timevisOutput('timeLineCourses'),
+      wellPanel(
+        div(id="certificate")
+      )
+    )
+  )
+)
+output$timeLineCourses <- renderTimevis({
+  timevis(timeLineCourses, showZoom = FALSE, height = 250)
+  })
+
+observeEvent(input$timeLineCourses_selected, {
+  selectedCourse <- timeLineCourses %>% 
+    filter(id == as.numeric(input$timeLineCourses_selected))
+  
+  insertUI(
+    selector = "#certificate", 
+    ui = tags$iframe(src = selectedCourse$Certificate, seamless=NA)
+  )
+
+})
+```
+
 
