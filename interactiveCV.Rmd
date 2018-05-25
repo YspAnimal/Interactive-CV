@@ -1,11 +1,12 @@
 ---
 title: "Interactive Profile"
-output: 
-  flexdashboard::flex_dashboard:
-    #social: menu
-    source_code: https://github.com/YspAnimal/Interactive-CV
-    theme: bootstrap
+resource_files:
+- myphoto.jpeg
 runtime: shiny
+output:
+  flexdashboard::flex_dashboard:
+    source_code: https://github.com/YspAnimal/Interactive-CV
+    theme: spacelab
 ---
 
 ```{r setup, include=FALSE}
@@ -52,6 +53,11 @@ Nikolay Solovey
 
 **Location:**
 Izhevsk, Russia. Open to the world)
+
+**Education:**
+BS Mathematics
+Specialist Applied Math
+
 ```{r}
 HTML('<hr style="color: gray;">')
 ```
@@ -59,13 +65,14 @@ HTML('<hr style="color: gray;">')
 About {data-icon="fa-user"}
 ======================
 
-IT specialist
+System Engineer / IT Manager
 
-Male, 32 year`s old
+Hi Everyone!
 
-Bachelor degree in Mathematics
+I`m senior system engineer with a good knowledge of mathematics, statistics and process management. After 10 years in IT(Servers, Virtualization, Video conferencing solutions, ERP systems, ITSM), I've decided to transit into data analytics, data mining and machine learning fields. Please follow to the "Careers" and the "Education & Training" sections for exploring my working experience, career, projects list and education.
 
-Specialist degree in Applied Math
+
+This is my first open project in "Web" and "Analytics" cases that uses R+Shiny for sharing my past and current experience for everybody! Future plans: As the next step app will use a more flexible approaches, such as using API of the biggest Russian HR portal hh.ru and scrapping data from my personal CV in automatic mode.
 
 
 
@@ -74,11 +81,10 @@ Specialist degree in Applied Math
 
 Careers {data-icon="fa-building"}
 ======================
+
 ### Working Path
 ```{r}
-shinyUI(
-semanticPage(
-  fluidRow(
+fluidRow(
     column(width = 8,
       timevisOutput('timeLineWork'),
       wellPanel(
@@ -88,7 +94,7 @@ semanticPage(
     column(width = 4,
       DT::dataTableOutput("projects")       
     )
-  ),
+  )
   fluidRow(
     column(width = 8,
            titlePanel("Work overview")
@@ -99,7 +105,6 @@ semanticPage(
            )
     
   )
-))
 output$timeLineWork <- renderTimevis({
   timevis(timeLineData, showZoom = FALSE, height = 250)
   })
@@ -142,12 +147,12 @@ observeEvent(input$timeLineWork_selected, {
 
 ```
 
-Education {data-icon="fa-graduation-cap"}
+Education & Training {data-icon="fa-graduation-cap"}
 ======================
 ###Learning Path
 
 ```{r}
-fluidPage(
+#fluidPage(
   fluidRow(
     column(width = 12,
       timevisOutput('timeLineCourses'),
@@ -156,7 +161,7 @@ fluidPage(
       )
     )
   )
-)
+#)
 output$timeLineCourses <- renderTimevis({
   timevis(timeLineCourses, showZoom = FALSE, height = 250)
   })

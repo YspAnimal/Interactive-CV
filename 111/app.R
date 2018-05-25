@@ -1,52 +1,50 @@
 library(shiny)
+library(shinyBS)
 
-ui <- fluidPage(
-  timevisOutput('timeLine'),
-  tags$div(id="skillsButtons", style = "margin: 5px")  )
-
-server <- function(input, output, session) {
-  timeLineData <- read.xlsx("../WorkingPath.xlsx", sheet = 1, detectDates = TRUE)
-  timeLineData$content <- timeLineData$place
-  projects <- read.xlsx("../WorkingPath.xlsx", sheet = 2)
-  skills <- read.xlsx("../WorkingPath.xlsx", sheet = 3)
-  
-  
-  output$timeLine <- renderTimevis({
-    timevis(timeLineData, showZoom = FALSE, height = 250)
-  })
-  inserted <- c()
-  
-  observeEvent(input$timeLine_selected, {
-    selectedOrg <- timeLineData %>% 
-      filter(id == as.numeric(input$timeLine_selected)) %>% 
-      select(place)
-    selectedSkills <- skills %>% 
-      filter(company %in% selectedOrg)
-    
-    if (!is.null(inserted)) {
-      map(inserted, function(x){
-        removeUI(selector =  paste0("#", x))
-      })
-    }
-    
-    idNum <- 1
-    skillsButtons <- map(selectedSkills$keySkills, function(x){
-      id <- paste0('skill', idNum)
-      inserted[idNum] <<- id
-      button <- actionButton(id,x)
-      idNum <<- idNum + 1
-      return(button)
-    })
-    print(str(skillsButtons))
-    fluidRow(
-      insertUI(
-        selector = "#skillsButtons", 
-        ui = skillsButtons
+app = shinyApp(
+  ui =
+    fluidPage(
+      sidebarLayout(
+        sidebarPanel(
+          sliderInput("bins",
+                      "Number of bins:",
+                      min = 1,
+                      max = 50,
+                      value = 30),
+          bsTooltip("bins", "The wait times will be broken into this many equally spaced bins",
+                    "right", options = list(container = "body"))
+        ),
+        mainPanel(
+          plotOutput("distPlot"),
+          uiOutput("uiExample")
+        )
       )
-    )
-  })
-  
-}
-
-
-shinyApp(ui = ui, server = server)
+    ),
+  server =
+    function(input, output, session) {
+      output$distPlot <- renderPlot({
+        
+        # generate bins based on input$bins from ui.R
+        x    <- faithful[, 2]
+        bins <- seq(min(x), max(x), length.out = input$bins + 1)
+        
+        # draw the histogram with the specified number of bins
+        hist(x, breaks = bins, col = 'darkgray', border = 'white')
+        
+      })
+      output$uiExample <- renderUI({
+        tags$span(
+          popify(bsButton("pointlessButton", "Button", style = "primary", size = "large"),
+                 "A Pointless Button",
+                 "This button is <b>pointless</b>. It does not do <em>anything</em>!"),
+          tipify(bsButton("pB2", "Button", style = "inverse", size = "extra-small"),
+                 "This button is pointless too!")
+        )
+      })
+      addPopover(session, "distPlot", "Data", content = paste0("<p>Waiting time between ",
+                                                               "eruptions and the duration of the eruption for the Old Faithful geyser ",
+                                                               "in Yellowstone National Park, Wyoming, USA.</p><p>Azzalini, A. and ",
+                                                               "Bowman, A. W. (1990). A look at some data on the Old Faithful geyser. ",
+                                                               "Applied Statistics 39, 357-365.</p>"), trigger = 'click')
+    }
+)

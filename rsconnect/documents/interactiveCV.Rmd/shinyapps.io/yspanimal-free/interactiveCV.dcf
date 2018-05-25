@@ -1,0 +1,13 @@
+name: interactiveCV
+title: interactiveCV
+username:
+account: yspanimal-free
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 345959
+bundleId: 1383566
+url: https://yspanimal-free.shinyapps.io/interactiveCV/
+when: 1526853357.399
+asMultiple: FALSE
+asStatic: FALSE
+additionalFiles: myphoto.jpeg
